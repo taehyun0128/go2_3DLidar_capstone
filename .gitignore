@@ -24,3 +24,7 @@ Thumbs.db
 
 # Secrets
 .env
+
+# ---- show only unitree-go2-ros2 under src ----
+src/*
+!src/unitree-go2-ros2/
