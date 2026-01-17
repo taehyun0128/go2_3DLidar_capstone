@@ -1,0 +1,26 @@
+# ROS2 / colcon outputs (자동 생성)
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Large data (백업 대상 아니면 유지)
+*.db3
+*.bag
+*.pcd
+
+# Secrets
+.env
