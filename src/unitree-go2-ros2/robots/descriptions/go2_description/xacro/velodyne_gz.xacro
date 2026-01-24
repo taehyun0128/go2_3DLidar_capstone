@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- =========================
+       Args (원하면 로봇 xacro include할 때 override 가능)
+       ========================= -->
+  <!-- base_link 대신 trunk에 달고 싶으면 parent_link를 trunk로 바꿔서 include하면 됨 -->
+  <xacro:arg name="parent_link" default="base_link"/>
+
+  <xacro:arg name="mount_xyz" default="0.2 0 0.08"/>
+  <xacro:arg name="mount_rpy" default="0 0 0"/>
+
+  <xacro:arg name="topic" default="/velodyne_points"/>
+  <xacro:arg name="update_rate" default="10"/>
+
+  <!-- VLP-16 스펙 느낌 -->
+  <xacro:arg name="h_samples" default="440"/>
+  <xacro:arg name="h_min_angle" default="-3.141592653589793"/>
+  <xacro:arg name="h_max_angle" default="3.141592653589793"/>
+
+  <xacro:arg name="v_samples" default="16"/>
+  <xacro:arg name="v_min_angle" default="-0.2617993877991494"/>
+  <xacro:arg name="v_max_angle" default="0.2617993877991494"/>
+
+  <xacro:arg name="range_min" default="0.3"/>
+  <xacro:arg name="range_max" default="131.0"/>
+  <xacro:arg name="range_resolution" default="0.001"/>
+
+  <!-- =========================
+       Mount joints / links
+       ========================= -->
+  <joint name="velodyne_base_mount_joint" type="fixed">
+    <origin rpy="$(arg mount_rpy)" xyz="$(arg mount_xyz)"/>
+    <parent link="$(arg parent_link)"/>
+    <child link="velodyne_base_link"/>
+  </joint>
+
+  <link name="velodyne_base_link">
+    <inertial>
+      <mass value="0.83"/>
+      <origin xyz="0 0 0.03585"/>
+      <inertia ixx="0.000908059425" ixy="0" ixz="0"
+               iyy="0.000908059425" iyz="0"
+               izz="0.0011049624"/>
+    </inertial>
+
+    <visual>
+      <geometry>
+        <mesh filename="file://$(find velodyne_description)/meshes/VLP16_base_1.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <geometry>
+        <mesh filename="file://$(find velodyne_description)/meshes/VLP16_base_2.dae"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0.03585"/>
+      <geometry>
+        <cylinder length="0.0717" radius="0.0516"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="velodyne_base_scan_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.0377"/>
+    <parent link="velodyne_base_link"/>
+    <child link="velodyne"/>
+  </joint>
+
+  <link name="velodyne">
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1e-7" ixy="0" ixz="0"
+               iyy="1e-7" iyz="0"
+               izz="1e-7"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 -0.0377"/>
+      <geometry>
+        <mesh filename="file://$(find velodyne_description)/meshes/VLP16_scan.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!-- =========================
+       GZ Harmonic (gz-sim) LiDAR sensor
+       - Classic 플러그인 제거!
+       - GZ 토픽을 직접 발행 -> ros_gz_bridge로 ROS로 가져오기
+       ========================= -->
+  <gazebo reference="velodyne">
+    <!-- ray 대신 gpu_lidar 추천 (포인트클라우드 출력에 유리) -->
+    <sensor name="lidar32" type="gpu_lidar">
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+
+      <pose>0 0 0 0 0 0</pose>
+
+      <topic>lidar/points</topic>
+
+      <gpu_lidar>
+        <scan>
+          <horizontal>
+            <samples>2048</samples>
+            <min_angle>-3.14159265</min_angle>
+            <max_angle> 3.14159265</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>32</samples>
+            <!-- 예시 -25deg ~ +15deg 같은 스펙에 맞춰 -->
+            <min_angle>-0.436332</min_angle>
+            <max_angle> 0.261799</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.3</min>
+          <max>200.0</max>
+        </range>
+      </gpu_lidar>
+    </sensor>
+  </gazebo>
+
+</robot>
