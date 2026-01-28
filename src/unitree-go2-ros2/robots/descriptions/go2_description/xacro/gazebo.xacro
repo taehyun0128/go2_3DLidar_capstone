@@ -66,10 +66,10 @@
         <mu2>0.2</mu2>
     </gazebo> -->
 
-    <!-- <gazebo reference="imu_link">
+    <gazebo reference="imu_link">
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
-    </gazebo> -->
+    </gazebo>
 
     <!-- FL leg -->
     <gazebo reference="lf_hip_link">

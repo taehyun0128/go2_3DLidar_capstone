@@ -93,16 +93,19 @@
        - GZ 토픽을 직접 발행 -> ros_gz_bridge로 ROS로 가져오기
        ========================= -->
   <gazebo reference="velodyne">
-    <!-- ray 대신 gpu_lidar 추천 (포인트클라우드 출력에 유리) -->
     <sensor name="lidar32" type="gpu_lidar">
       <always_on>true</always_on>
       <update_rate>10</update_rate>
-
       <pose>0 0 0 0 0 0</pose>
 
+      <!-- 짧은 토픽명 추천(브릿지/확인 쉬움) -->
       <topic>lidar/points</topic>
 
-      <gpu_lidar>
+      <!-- 프레임 지정(원하는 링크 프레임) -->
+      <gz_frame_id>velodyne</gz_frame_id>
+
+      <!-- ✅ gpu_lidar 내부는 <lidar> -->
+      <lidar>
         <scan>
           <horizontal>
             <samples>2048</samples>
@@ -111,7 +114,6 @@
           </horizontal>
           <vertical>
             <samples>32</samples>
-            <!-- 예시 -25deg ~ +15deg 같은 스펙에 맞춰 -->
             <min_angle>-0.436332</min_angle>
             <max_angle> 0.261799</max_angle>
           </vertical>
@@ -120,8 +122,8 @@
           <min>0.3</min>
           <max>200.0</max>
         </range>
-      </gpu_lidar>
+      </lidar>
     </sensor>
-  </gazebo>
+</gazebo>
 
 </robot>

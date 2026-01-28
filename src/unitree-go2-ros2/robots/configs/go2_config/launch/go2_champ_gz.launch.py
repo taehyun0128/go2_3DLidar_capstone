@@ -8,6 +8,8 @@ from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     # -------------------------
@@ -30,8 +32,13 @@ def generate_launch_description():
     declare_lite = DeclareLaunchArgument("lite", default_value="false")
 
     declare_world = DeclareLaunchArgument(
-        "world", default_value="empty.sdf",
-        description="GZ Sim world (SDF). e.g. empty.sdf or /abs/path/to/world.sdf"
+        "world",
+        default_value=PathJoinSubstitution([
+            FindPackageShare("go2_config"),
+            "worlds",
+            "empty_with_sensors.sdf",
+        ]),
+        description="GZ Sim world (SDF)."
     )
     declare_world_init_x = DeclareLaunchArgument("world_init_x", default_value="0.0")
     declare_world_init_y = DeclareLaunchArgument("world_init_y", default_value="0.0")
@@ -80,6 +87,43 @@ def generate_launch_description():
         ],
         output="screen",
     )
+
+    # (B-2) LiDAR PointCloud bridge (GZ -> ROS)
+    pc_bridge = ExecuteProcess(
+        cmd=[
+            "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+            "/lidar/points/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+            "--ros-args",
+            "-r", "/lidar/points/points:=/velodyne_points",
+            "-p", "lazy:=false",
+        ],
+        output="screen",
+    )
+
+    # (B-3) LiDAR LaserScan bridge (GZ -> ROS) : 필요할 때만
+    scan_bridge = ExecuteProcess(
+        cmd=[
+            "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+            "/lidar/points@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+            "--ros-args",
+            "-r", "/lidar/points:=/scan",
+            "-p", "lazy:=false",
+        ],
+        output="screen",
+    )
+
+    imu_bridge = ExecuteProcess(
+        cmd=[
+            "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+            "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU",
+            "--ros-args",
+            "-r", "/imu:=/imu/data",
+            "-p", "lazy:=false",
+        ],
+        output="screen",
+    )
+
+
 
     # -------------------------
     # (C) robot_state_publisher
@@ -190,6 +234,9 @@ def generate_launch_description():
 
         gz_sim,
         clock_bridge,
+        pc_bridge,
+        scan_bridge,
+        imu_bridge,
 
         rsp,
         TimerAction(period=2.0, actions=[spawn_go2]),
